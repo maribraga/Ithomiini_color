@@ -8,16 +8,16 @@ library(ape)
 
 ## Check convergence ----
 
-chain1_full <- read.table("./output/out.3itho_color.log", header = TRUE)[,c(1,5,8,9)]
-chain2_full <- read.table("./output/out.5itho_color.log", header = TRUE)[,c(1,5,8,9)]
+chain1_full <- read.table("./output/log_and_txt_files/out.3itho_color.log", header = TRUE)[,c(1,5,8,9)]
+chain2_full <- read.table("./output/log_and_txt_files/out.5itho_color.log", header = TRUE)[,c(1,5,8,9)]
 
 colnames(chain1_full) <- colnames(chain2_full) <- c("iteration","clock", "lambda[02]", "lambda[20]")
 
 max(chain1_full$iteration)
 max(chain2_full$iteration)
 
-chain1 <- filter(chain1_full, iteration >= 2800 & iteration <= 28000)
-chain2 <- filter(chain2_full, iteration >= 2800 & iteration <= 28000)
+chain1 <- filter(chain1_full, iteration >= 8000 & iteration <= 80000)
+chain2 <- filter(chain2_full, iteration >= 8000 & iteration <= 80000)
 
 gelman.diag(mcmc.list(as.mcmc(chain1), as.mcmc(chain2)))
 
@@ -27,17 +27,30 @@ gelman.diag(mcmc.list(as.mcmc(chain1), as.mcmc(chain2)))
 ## Character history ----
 
 # Read history
-history1 <- read_history("./output/out.3itho_color.history.txt", burnin = 0.1)
-history2 <- read_history("./output/out.5itho_color.history.txt", burnin = 0.1)
+# history1 <- read_history("./output/log_and_txt_files/out.3itho_color.history.txt", burnin = 0.1)
+# history2 <- read_history("./output/log_and_txt_files/out.5itho_color.history.txt", burnin = 0.1)
+# 
+# (ne1 <- count_events(history1))
+# (ne2 <- count_events(history2))
+# effective_rate(history1,tree)
+# (gl1 <- count_gl(history1))
+# (gl2 <- count_gl(history2))
+# 
+# length(unique(history1$iteration))
+# length(unique(history2$iteration))
+# 
+# history <- filter(history1, iteration %in% sample(unique(history1$iteration), 1000))
+# length(unique(history$iteration))
+# saveRDS(history, "./output/history_1000it.rds")
 
-(ne1 <- count_events(history1))
-(ne2 <- count_events(history2))
-(gl1 <- count_gl(history1))
-(gl2 <- count_gl(history2))
+history <- readRDS("./output/history_1000it.rds")
+n_events <- count_events(history)
 
 # Read trees
 tree_index <- treeio::read.beast.newick("./data/itho_color_Rev.tre")
 tree <- tree_index@phylo
+
+rate <- effective_rate(history, tree)
 
 index_node <- tree_index@data
 names(index_node$index) <- NULL
@@ -49,6 +62,8 @@ index_labels <- index_node %>%
   pull(index)
 
 tree$node.label <- paste0("Index_",index_labels)  # index_labels
+#saveRDS(tree, "./output/tree_node_index.rds")
+
 
 #plot
 ggtree(tree, ladderize = F, layout="circular", size = 0.2) +
@@ -59,9 +74,10 @@ host_tree <- read.tree("./data/44tips.tre")
 hosts <- paste0("C",1:Ntip(host_tree))
 host_tree$tip.label <- hosts
 
+
 ## Ancestral states ----
 
-at_nodes <- posterior_at_nodes(history2, tree, host_tree)
+at_nodes <- posterior_at_nodes(history, tree, host_tree)
 pp_at_nodes <- at_nodes[[2]]
 
 high_pp <- function(matrix, pt, weighted = TRUE){
@@ -107,13 +123,13 @@ matrix_90 <- high_pp(pp_at_nodes, 0.90)
 #                                             TRUE ~ "symbiont"))
 # 
 # write.csv(all_mod, "./output/all_mod.csv", row.names = F)
-read.csv("./output/all_mod.csv", header = T)
-
+all_mod <- read.csv("./output/all_mod.csv", header = T)
+all_mod <- read.csv("./output/most_common_11.csv", header = T)
   
 asr <- plot_ancestral_states(tree, at_nodes, all_mod,
                                #module_order = paste0("M",1:13),
                                layout = "circular",
-                               threshold = 0.95, 
+                               threshold = 0.9, 
                                point_size = 2, 
                                dodge_width = 0.002)
 
@@ -123,3 +139,4 @@ plot_module_matrix2(t(as.matrix(net)), at_nodes, tree, host_tree,
                      point_size = 2, 
                      dodge_width = 0.015)
 
+plotModuleWeb(mod_members)

@@ -12,7 +12,7 @@ data <- read.nexus.data("./data/original_Ithomiini_mimicry_data_mtx.nex") %>%
   t()
 colnames(data) <- paste0("C",1:44)
 
-write.csv(t(data),"./data/spp_col_net.csv", row.names = T)
+#write.csv(t(data),"./data/spp_col_net.csv", row.names = T)
 
 ggt <- ggtree(tree, layout = 'circular') + geom_tiplab(size = 1) + theme_tree2()
 gheatmap(ggt, data)
