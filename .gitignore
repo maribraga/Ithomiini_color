@@ -1,5 +1,10 @@
 .DS_Store
 */DS_Store
+text/~$*
+
+output/log_and_txt_files/
+output/*.tar.gz
+output/*.tar
 
 # History files
 .Rhistory
