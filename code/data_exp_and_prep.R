@@ -12,6 +12,8 @@ data <- read.nexus.data("./data/original_Ithomiini_mimicry_data_mtx.nex") %>%
   t()
 colnames(data) <- paste0("C",1:44)
 
+write.csv(t(data),"./data/spp_col_net.csv", row.names = T)
+
 ggt <- ggtree(tree, layout = 'circular') + geom_tiplab(size = 1) + theme_tree2()
 gheatmap(ggt, data)
 
@@ -49,4 +51,14 @@ plot_col_div <- ggplot(col_div) +
 
 
 ggplot(col_div) + geom_density(aes(n_col)) + theme_bw()
+
+
+# Only color patterns present in more than 10 species
+
+topc <- common %>% 
+  filter(n_spp >= 10) %>%   # we loose 17 spp 
+  pull(color)               # the only way to keep all spp is to filter >= 2 (only 5 colors out)
+
+data_topc <- data[,topc]
+table(rowSums(data_topc))
 
